@@ -1596,55 +1596,63 @@
             } catch (error) {
                 console.warn("[Loader] Servidor local inactivo. Iniciando Modo Presentación Web con datos de auditoría precalculados:", error);
                 
+                rawStatsBacking = {
+                    stats: {
+                        MME: { top_winners: [{ prov: "AIR-E S.A.S. E.S.P.", count: 24, val: 97116824022 }] },
+                        ANH: { top_winners: [{ prov: "ASOCIACION COLOMBIANA DE INGENIEROS DE PETROLEOS...", count: 9, val: 3007323413 }] },
+                        UPME: { top_winners: [{ prov: "UNIVERSIDAD NACIONAL DE COLOMBIA", count: 5, val: 1168875920 }] }
+                    }
+                };
+
                 // Fallback robusto con el consolidado real de la auditoría forense
                 PROCUREMENT_DATA = {
                     ALL: {
-                        total_val: "$6.90 Billones",
-                        total_val_raw: 6902891298691,
-                        total_cnt: 336,
-                        unico_val: "$6.55 Billones",
-                        unico_val_raw: 6550845005834,
-                        unico_pct: "94.90%",
-                        unico_cnt: 185,
-                        unico_pct_cnt: "55.06%",
-                        max_concentracion: "0.40 HHI",
+                        total_val: "$9.71 Billones",
+                        total_val_raw: 9712325788704,
+                        total_cnt: 18202,
+                        unico_val: "$7.41 Billones",
+                        unico_val_raw: 7414142223541,
+                        unico_pct: "76.34%",
+                        unico_cnt: 14320,
+                        unico_pct_cnt: "78.67%",
+                        max_concentracion: "19.42% HHI",
                         max_concentracion_desc: "Proveedor líder: GECELCA S.A. E.S.P."
                     },
                     MME: {
-                        total_val: "$6.68 Billones",
-                        total_val_raw: 6681796963095,
-                        total_cnt: 266,
-                        unico_val: "$6.48 Billones",
-                        unico_val_raw: 6476573415540,
-                        unico_pct: "96.93%",
-                        unico_cnt: 171,
-                        unico_pct_cnt: "64.29%",
-                        max_concentracion: "0.40 HHI",
+                        total_val: "$6.67 Billones",
+                        total_val_raw: 6674370549944,
+                        total_cnt: 5503,
+                        unico_val: "$5.78 Billones",
+                        unico_val_raw: 5777090423834,
+                        unico_pct: "86.56%",
+                        unico_cnt: 4998,
+                        unico_pct_cnt: "90.82%",
+                        max_concentracion: "40.63% HHI",
                         max_concentracion_desc: "Proveedor líder: GECELCA S.A. E.S.P."
                     },
                     ANH: {
-                        total_val: "$216.11 Miles de Millones",
-                        total_val_raw: 216105644261,
-                        total_cnt: 60,
-                        unico_val: "$74.27 Miles de Millones",
-                        unico_val_raw: 74271590294,
-                        unico_pct: "34.37%",
-                        unico_cnt: 14,
-                        unico_pct_cnt: "23.33%",
-                        max_concentracion: "0.10 HHI",
+                        total_val: "$859.06 Miles de Millones",
+                        total_val_raw: 859060813777,
+                        total_cnt: 1837,
+                        unico_val: "$634.93 Miles de Millones",
+                        unico_val_raw: 634928869917,
+                        unico_pct: "73.91%",
+                        unico_cnt: 1700,
+                        unico_pct_cnt: "92.54%",
+                        max_concentracion: "4.48% HHI",
                         max_concentracion_desc: "Proveedor líder: Consorcio H2C"
                     },
                     UPME: {
-                        total_val: "$4.99 Miles de Millones",
-                        total_val_raw: 4988691335,
-                        total_cnt: 10,
+                        total_val: "$98.40 Miles de Millones",
+                        total_val_raw: 98400580172,
+                        total_cnt: 1353,
                         unico_val: "$0.00",
                         unico_val_raw: 0,
                         unico_pct: "0.00%",
                         unico_cnt: 0,
                         unico_pct_cnt: "0.00%",
-                        max_concentracion: "0.15 HHI",
-                        max_concentracion_desc: "Proveedor líder: CORPORACION EMA"
+                        max_concentracion: "0.34% HHI",
+                        max_concentracion_desc: "Proveedor líder: INFORMACION LOCALIZADA S.A.S"
                     }
                 };
 
