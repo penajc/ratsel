@@ -1,0 +1,2063 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ratsel - Visor de Anomalías de Contratación SECOP II</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Chart.js CDN for professional charts -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --bg-color: #0b0f19;
+            --card-bg: rgba(17, 24, 39, 0.7);
+            --card-border: rgba(255, 255, 255, 0.08);
+            --text-main: #f3f4f6;
+            --text-muted: #9ca3af;
+            --primary: #6366f1;
+            --primary-glow: rgba(99, 102, 241, 0.15);
+            --accent-red: #ef4444;
+            --accent-red-glow: rgba(239, 68, 68, 0.2);
+            --accent-yellow: #f59e0b;
+            --accent-yellow-glow: rgba(245, 158, 11, 0.15);
+            --accent-green: #10b981;
+            --accent-green-glow: rgba(16, 185, 129, 0.15);
+            --sidebar-width: 280px;
+            --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            min-height: 100vh;
+            overflow-x: hidden;
+            display: flex;
+        }
+
+        /* Ambient Glow Backgrounds */
+        .ambient-glow {
+            position: fixed;
+            width: 500px;
+            height: 500px;
+            border-radius: 50%;
+            pointer-events: none;
+            filter: blur(120px);
+            z-index: 0;
+            opacity: 0.12;
+        }
+        .glow-1 {
+            background-color: var(--primary);
+            top: -10%;
+            left: 20%;
+        }
+        .glow-2 {
+            background-color: var(--accent-red);
+            bottom: 10%;
+            right: 10%;
+        }
+
+        /* Sidebar Navigation */
+        aside {
+            width: var(--sidebar-width);
+            background-color: rgba(11, 15, 25, 0.9);
+            border-right: 1px solid var(--card-border);
+            padding: 2.5rem 1.5rem;
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            height: 100vh;
+            z-index: 10;
+            backdrop-filter: blur(20px);
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 3.5rem;
+        }
+
+        .brand-logo {
+            width: 38px;
+            height: 38px;
+            background: linear-gradient(135deg, var(--primary), #8b5cf6);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1.25rem;
+            color: white;
+            box-shadow: 0 4px 20px rgba(99, 102, 241, 0.4);
+        }
+
+        .brand-name {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.5rem;
+            font-weight: 700;
+            background: linear-gradient(to right, #ffffff, #a5b4fc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -0.5px;
+        }
+
+        .menu-title {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--text-muted);
+            margin-bottom: 1rem;
+            font-weight: 600;
+        }
+
+        .nav-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .nav-item {
+            padding: 0.85rem 1rem;
+            border-radius: 10px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-weight: 500;
+            color: var(--text-muted);
+            transition: var(--transition-smooth);
+            border: 1px solid transparent;
+        }
+
+        .nav-item:hover {
+            color: var(--text-main);
+            background-color: rgba(255, 255, 255, 0.03);
+        }
+
+        .nav-item.active {
+            color: white;
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(99, 102, 241, 0.05));
+            border-color: rgba(99, 102, 241, 0.25);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .nav-item-icon {
+            font-size: 1.2rem;
+        }
+
+        /* Main Content Area */
+        main {
+            margin-left: var(--sidebar-width);
+            flex: 1;
+            padding: 2.5rem 3rem;
+            position: relative;
+            z-index: 1;
+            max-width: 1600px;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2.5rem;
+        }
+
+        h1 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 2.25rem;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            background: linear-gradient(to right, #ffffff, #e0e7ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .subtitle {
+            font-size: 0.95rem;
+            color: var(--text-muted);
+            margin-top: 0.25rem;
+        }
+
+        /* Entity Selector Slicer */
+        .slicer-container {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background-color: var(--card-bg);
+            border: 1px solid var(--card-border);
+            padding: 0.35rem;
+            border-radius: 12px;
+            backdrop-filter: blur(10px);
+        }
+
+        .slicer-btn {
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            border: none;
+            background: transparent;
+            color: var(--text-muted);
+            font-family: inherit;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition-smooth);
+        }
+
+        .slicer-btn:hover {
+            color: var(--text-main);
+        }
+
+        .slicer-btn.active {
+            background-color: var(--primary);
+            color: white;
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+        }
+
+        /* KPI Dashboard Cards */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .kpi-card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            padding: 1.5rem;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            transition: var(--transition-smooth);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .kpi-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: transparent;
+            transition: var(--transition-smooth);
+        }
+
+        .kpi-card:hover {
+            transform: translateY(-4px);
+            border-color: rgba(255, 255, 255, 0.15);
+        }
+
+        .kpi-card.anomaly-active::before {
+            background: linear-gradient(to right, var(--accent-red), #f43f5e);
+        }
+
+        .kpi-card.primary-active::before {
+            background: linear-gradient(to right, var(--primary), #8b5cf6);
+        }
+
+        .kpi-card.yellow-active::before {
+            background: linear-gradient(to right, var(--accent-yellow), #fbbf24);
+        }
+
+        .kpi-title {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .kpi-value {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.75rem;
+            font-weight: 700;
+            margin-bottom: 0.25rem;
+        }
+
+        .kpi-desc {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .alert-badge {
+            padding: 0.15rem 0.4rem;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            display: inline-block;
+        }
+
+        .alert-badge-red {
+            background-color: var(--accent-red-glow);
+            color: #f87171;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            animation: pulse-border 2s infinite;
+        }
+
+        @keyframes pulse-border {
+            0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+            70% { box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+        }
+
+        /* Grid Layout for visual blocks */
+        .content-grid {
+            display: grid;
+            grid-template-columns: 3fr 2fr;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 1100px) {
+            .content-grid {
+                grid-template-columns: 1fr;
+            }
+            .kpi-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        .panel {
+            background-color: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 20px;
+            padding: 1.75rem;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 10px 35px rgba(0, 0, 0, 0.2);
+        }
+
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            padding-bottom: 1rem;
+        }
+
+        .panel-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.25rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Charts styling */
+        .chart-container {
+            position: relative;
+            width: 100%;
+            height: 320px;
+        }
+
+        /* Table Styling */
+        .table-container {
+            overflow-x: auto;
+            margin-top: 0.5rem;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 0.875rem;
+        }
+
+        th {
+            padding: 0.85rem 1rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            border-bottom: 1px solid var(--card-border);
+            background-color: rgba(255, 255, 255, 0.01);
+        }
+
+        td {
+            padding: 0.85rem 1rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+            color: var(--text-main);
+            vertical-align: middle;
+        }
+
+        tr:hover td {
+            background-color: rgba(255, 255, 255, 0.015);
+        }
+
+        .entity-badge {
+            background-color: rgba(255, 255, 255, 0.06);
+            padding: 0.25rem 0.5rem;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            display: inline-block;
+        }
+
+        /* Search input bar */
+        .search-bar {
+            width: 100%;
+            margin-bottom: 1rem;
+            position: relative;
+        }
+
+        .search-input {
+            width: 100%;
+            background-color: rgba(11, 15, 25, 0.6);
+            border: 1px solid var(--card-border);
+            padding: 0.75rem 1rem;
+            border-radius: 10px;
+            color: white;
+            font-family: inherit;
+            font-size: 0.875rem;
+            transition: var(--transition-smooth);
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 10px rgba(99, 102, 241, 0.2);
+        }
+
+        /* Highlight Card Case Study */
+        .case-study-hero {
+            background: linear-gradient(135deg, rgba(17, 24, 39, 0.9), rgba(30, 27, 75, 0.4));
+            border: 1px solid rgba(99, 102, 241, 0.25);
+            border-radius: 20px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 2rem;
+        }
+
+        .case-study-hero::before {
+            content: '';
+            position: absolute;
+            width: 250px;
+            height: 250px;
+            background: radial-gradient(circle, rgba(99, 102, 241, 0.15) 0%, transparent 70%);
+            top: -50px;
+            right: -50px;
+            pointer-events: none;
+        }
+
+        .case-study-content {
+            flex: 2;
+            z-index: 2;
+        }
+
+        .case-study-badge {
+            background-color: var(--primary-glow);
+            color: #a5b4fc;
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            padding: 0.25rem 0.75rem;
+            border-radius: 30px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            display: inline-block;
+            margin-bottom: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .case-study-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.75rem;
+            font-weight: 700;
+            margin-bottom: 0.75rem;
+            color: white;
+            line-height: 1.25;
+        }
+
+        .case-study-desc {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            margin-bottom: 1.25rem;
+            line-height: 1.5;
+        }
+
+        .case-study-kpis {
+            display: flex;
+            gap: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .case-study-kpi {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            padding: 0.65rem 1.25rem;
+            border-radius: 12px;
+        }
+
+        .case-study-kpi-val {
+            font-family: 'Outfit', sans-serif;
+            font-weight: 700;
+            font-size: 1.15rem;
+            color: white;
+        }
+
+        .case-study-kpi-lbl {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-top: 0.15rem;
+        }
+
+        .case-study-side {
+            flex: 1;
+            min-width: 250px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 2;
+        }
+
+        .donut-container-small {
+            width: 170px;
+            height: 170px;
+            position: relative;
+        }
+
+        /* Tab panels visibility */
+        .tab-panel {
+            display: none;
+            animation: fadeIn 0.4s ease forwards;
+        }
+
+        .tab-panel.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Pulse Dot for Risk indicator */
+        .risk-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 0.5rem;
+            vertical-align: middle;
+        }
+        .risk-dot-high { background-color: var(--accent-red); box-shadow: 0 0 10px var(--accent-red); }
+        .risk-dot-med { background-color: var(--accent-yellow); box-shadow: 0 0 10px var(--accent-yellow); }
+        .risk-dot-low { background-color: var(--accent-green); box-shadow: 0 0 10px var(--accent-green); }
+
+        /* Power BI Suggestion Card */
+        .pbi-integration-banner {
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.08) 0%, rgba(245, 158, 11, 0.02) 100%);
+            border: 1px dashed rgba(245, 158, 11, 0.3);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-top: 2.5rem;
+            display: flex;
+            gap: 1.25rem;
+            align-items: flex-start;
+        }
+
+        .pbi-logo {
+            width: 44px;
+            height: 44px;
+            background-color: #fbbf24;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 1.5rem;
+            color: #0b0f19;
+            box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);
+            flex-shrink: 0;
+        }
+
+        .pbi-banner-title {
+            font-weight: 600;
+            font-size: 0.95rem;
+            color: #fef08a;
+            margin-bottom: 0.35rem;
+        }
+
+        .pbi-banner-text {
+            font-size: 0.825rem;
+            color: var(--text-muted);
+            line-height: 1.5;
+        }
+
+        .code-snippet {
+            background-color: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            padding: 0.5rem;
+            border-radius: 6px;
+            font-family: monospace;
+            font-size: 0.75rem;
+            color: #fcd34d;
+            margin-top: 0.5rem;
+            display: block;
+            white-space: pre-wrap;
+        }
+
+        /* Chat bot styling */
+        .chat-message-user {
+            display: flex;
+            gap: 0.75rem;
+            align-items: flex-start;
+            max-width: 85%;
+            align-self: flex-end;
+            flex-direction: row-reverse;
+        }
+
+        .chat-bubble-user {
+            background: linear-gradient(135deg, var(--primary), #4f46e5);
+            border: 1px solid rgba(99, 102, 241, 0.2);
+            padding: 1rem;
+            border-radius: 16px 0px 16px 16px;
+            line-height: 1.5;
+            font-size: 0.9rem;
+            color: white;
+            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.1);
+        }
+
+        .chat-message-bot {
+            display: flex;
+            gap: 0.75rem;
+            align-items: flex-start;
+            max-width: 85%;
+            align-self: flex-start;
+        }
+
+        .chat-bubble-bot {
+            background-color: rgba(255, 255, 255, 0.04);
+            border: 1px solid var(--card-border);
+            padding: 1rem;
+            border-radius: 0px 16px 16px 16px;
+            line-height: 1.5;
+            font-size: 0.9rem;
+            color: var(--text-main);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+        }
+
+        .chat-bubble-bot strong {
+            color: #a5b4fc;
+        }
+
+        .chat-bubble-bot ul {
+            margin-left: 1.25rem;
+            margin-top: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .chat-bubble-bot li {
+            margin-bottom: 0.25rem;
+        }
+
+        /* Typing indicator */
+        .typing-indicator {
+            display: flex;
+            gap: 4px;
+            padding: 4px 8px;
+            align-items: center;
+        }
+
+        .typing-dot {
+            width: 6px;
+            height: 6px;
+            background-color: var(--text-muted);
+            border-radius: 50%;
+            animation: typing 1s infinite alternate;
+        }
+
+        .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes typing {
+            from { transform: translateY(0); opacity: 0.4; }
+            to { transform: translateY(-4px); opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background-color: rgba(11, 15, 25, 0.95); backdrop-filter: blur(15px); z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: opacity 0.5s ease;">
+        <div class="brand-logo" style="width: 80px; height: 80px; font-size: 2.5rem; margin-bottom: 2rem; border-radius: 20px; background: linear-gradient(135deg, var(--primary), #8b5cf6); display: flex; align-items: center; justify-content: center; font-weight: 700; color: white; box-shadow: 0 4px 20px rgba(99, 102, 241, 0.4);">R</div>
+        <h2 style="font-family: 'Outfit', sans-serif; font-size: 1.75rem; margin-bottom: 0.5rem; background: linear-gradient(to right, #ffffff, #a5b4fc); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 700;">Auditoría Ratsel SECOP II</h2>
+        <div class="typing-indicator" style="margin-bottom: 1.5rem; display: flex; gap: 6px;">
+            <div class="typing-dot" style="width: 10px; height: 10px; background-color: var(--primary);"></div>
+            <div class="typing-dot" style="width: 10px; height: 10px; background-color: #8b5cf6; animation-delay: 0.2s;"></div>
+            <div class="typing-dot" style="width: 10px; height: 10px; background-color: var(--primary); animation-delay: 0.4s;"></div>
+        </div>
+        <p style="color: var(--text-muted); font-size: 0.95rem; font-family: 'Plus Jakarta Sans', sans-serif;" id="loading-text">Conectando con el motor forense local...</p>
+    </div>
+
+    <!-- Ambient Colors -->
+    <div class="ambient-glow glow-1"></div>
+    <div class="ambient-glow glow-2"></div>
+
+    <!-- Navigation Sidebar -->
+    <aside>
+        <div class="brand">
+            <div class="brand-logo">R</div>
+            <div class="brand-name">Ratsel Audit</div>
+        </div>
+
+        <div class="menu-title">Anomalías</div>
+        <ul class="nav-list">
+            <li class="nav-item active" onclick="switchTab('tab-unico-oferente', this)">
+                <span class="nav-item-icon">👤</span> Único Oferente
+            </li>
+            <li class="nav-item" onclick="switchTab('tab-concentracion', this)">
+                <span class="nav-item-icon">⚖️</span> Concentración / Favoritismo
+            </li>
+            <li class="nav-item" onclick="switchTab('tab-menor-cuantia', this)">
+                <span class="nav-item-icon">💸</span> Menor Cuantía
+            </li>
+            <li class="nav-item" onclick="switchTab('tab-megacontratos', this)">
+                <span class="nav-item-icon">⚡</span> Megacontratos
+            </li>
+            <li class="nav-item" onclick="switchTab('tab-asistente-ia', this)" style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.08), rgba(139, 92, 246, 0.03)); border: 1px dashed rgba(99, 102, 241, 0.25); margin-top: 1rem;">
+                <span class="nav-item-icon">🤖</span> Asistente IA Auditor
+            </li>
+        </ul>
+
+        <div class="pbi-integration-banner" onclick="openPowerBI()" style="margin-top: auto; padding: 1rem; gap: 0.75rem; cursor: pointer; transition: all 0.3s ease; border: 1px solid rgba(245, 158, 11, 0.3); background: rgba(245, 158, 11, 0.05);" onmouseover="this.style.background='rgba(245, 158, 11, 0.15)'; this.style.transform='translateY(-2px)';" onmouseout="this.style.background='rgba(245, 158, 11, 0.05)'; this.style.transform='translateY(0)';" title="Hacer clic para abrir el archivo local de Power BI (Ratsel-Secop3.pbip)">
+            <div class="pbi-logo" style="width: 32px; height: 32px; font-size: 1.1rem; border-radius: 6px; background-color: #f59e0b; color: #111827; font-weight: bold; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 10px rgba(245, 158, 11, 0.4);">Pb</div>
+            <div style="flex: 1;">
+                <div class="pbi-banner-title" style="font-size: 0.85rem; margin-bottom: 0.15rem; color: #f59e0b; font-weight: 600;">Abrir Power BI</div>
+                <div class="pbi-banner-text" style="font-size: 0.75rem; color: #a3a3a3;">Clic para abrir el proyecto Ratsel-Secop3.pbip</div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Workspace -->
+    <main>
+        <header>
+            <div>
+                <h1>Monitoreo Forense de Contratación Pública</h1>
+                <div class="subtitle">Análisis analítico interactivo del dataset SECOP II en base a las anomalías de adjudicación.</div>
+            </div>
+
+            <!-- Slicer Entidad -->
+            <div class="slicer-container">
+                <button class="slicer-btn active" onclick="filterEntity('ALL', this)">Todas las Entidades</button>
+                <button class="slicer-btn" onclick="filterEntity('MME', this)">MinMinas (MME)</button>
+                <button class="slicer-btn" onclick="filterEntity('ANH', this)">ANH</button>
+                <button class="slicer-btn" onclick="filterEntity('UPME', this)">UPME</button>
+            </div>
+        </header>
+
+        <!-- KPI dashboard cards grid -->
+        <section class="kpi-grid">
+            <div class="kpi-card primary-active">
+                <div class="kpi-title">Presupuesto Adjudicado Analizado</div>
+                <div class="kpi-value" id="kpi-total-val">$6.90 Billones</div>
+                <div class="kpi-desc">
+                    <span class="entity-badge" id="kpi-total-cnt">336 Contratos totales</span>
+                </div>
+            </div>
+
+            <div class="kpi-card anomaly-active">
+                <div class="kpi-title">Presupuesto con Único Oferente</div>
+                <div class="kpi-value" id="kpi-unico-val" style="color: #f87171;">$6.55 Billones</div>
+                <div class="kpi-desc">
+                    <span class="alert-badge alert-badge-red" id="kpi-unico-pct">94.90% del presupuesto</span>
+                </div>
+            </div>
+
+            <div class="kpi-card yellow-active">
+                <div class="kpi-title">Tasa de Contratos sin Competencia</div>
+                <div class="kpi-value" id="kpi-unico-cnt">55.06%</div>
+                <div class="kpi-desc">
+                    <span id="kpi-unico-desc">185 de 336 procesos con 1 oferente</span>
+                </div>
+            </div>
+
+            <div class="kpi-card primary-active">
+                <div class="kpi-title">Mayor Concentración de Presupuesto</div>
+                <div class="kpi-value" id="kpi-concentracion-val">62.93%</div>
+                <div class="kpi-desc" id="kpi-concentracion-desc">
+                    Adjudicado a GECELCA S.A. E.S.P.
+                </div>
+            </div>
+        </section>
+
+        <!-- ======================= TAB 1: UNICO OFERENTE ======================= -->
+        <section id="tab-unico-oferente" class="tab-panel active">
+            <!-- Hero Case Study on Single Bidder -->
+            <div class="case-study-hero">
+                <div class="case-study-content">
+                    <div class="case-study-badge">Hallazgo Principal de Riesgo</div>
+                    <div class="case-study-title">Debilidad Competitiva en Procesos Adjudicados</div>
+                    <div class="case-study-desc">
+                        El **94.90% de todo el presupuesto de contratación analizado** ($6.55 Billones de pesos) fue entregado a un único oferente que se presentó sin competidores en el SECOP II. Este patrón se acentúa en el **Ministerio de Minas y Energía**, donde el **96.9%** de sus fondos se contrató en estas condiciones.
+                    </div>
+                    <div class="case-study-kpis">
+                        <div class="case-study-kpi">
+                            <div class="case-study-kpi-val" style="color: #f87171;">64.3%</div>
+                            <div class="case-study-kpi-lbl">Contratos MME con Oferente Único</div>
+                        </div>
+                        <div class="case-study-kpi">
+                            <div class="case-study-kpi-val">$6.47 Billones</div>
+                            <div class="case-study-kpi-lbl">Monto con Oferente Único en MME</div>
+                        </div>
+                        <div class="case-study-kpi">
+                            <div class="case-study-kpi-val" style="color: #fcd34d;">23.3%</div>
+                            <div class="case-study-kpi-lbl">Contratos ANH con Oferente Único</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="case-study-side">
+                    <div class="donut-container-small">
+                        <canvas id="chart-unico-donut"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Content Grid: Chart & Table -->
+            <div class="content-grid">
+                <div class="panel">
+                    <div class="panel-header">
+                        <div class="panel-title">👥 Distribución de Contratos Adjudicados por Competencia</div>
+                        <div class="subtitle">Cantidad de proponentes presentados en ofertas reales</div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="chart-competencia-bar"></canvas>
+                    </div>
+                </div>
+
+                <div class="panel">
+                    <div class="panel-header">
+                        <div class="panel-title">⚠️ Entidades Afectadas por Oferente Único</div>
+                    </div>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Entidad</th>
+                                    <th>Único Oferente</th>
+                                    <th>Contratos Totales</th>
+                                    <th>% Proporción</th>
+                                </tr>
+                            </thead>
+                            <tbody id="table-unico-entidades">
+                                <!-- Data populated dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- List of Processes with single bidder -->
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="panel-title">🔎 Detalle de Procesos Críticos Adjudicados con Único Oferente</div>
+                </div>
+                <div class="search-bar">
+                    <input type="text" class="search-input" id="search-unico" placeholder="Buscar por proceso, modalidad o proveedor adjudicado..." onkeyup="searchTable('search-unico', 'table-unico-procesos')">
+                </div>
+                <div class="table-container" style="max-height: 400px; overflow-y: auto;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Entidad</th>
+                                <th>Referencia del Proceso</th>
+                                <th>Proveedor Ganador</th>
+                                <th style="text-align: right;">Valor Adjudicado</th>
+                                <th style="text-align: center;">Oferentes</th>
+                                <th style="text-align: center;">Tiempo de Oferta</th>
+                                <th>Modalidad</th>
+                                <th style="text-align: center;">Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody id="table-unico-procesos">
+                            <!-- Data populated dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- ======================= TAB 2: CONCENTRACION ======================= -->
+        <section id="tab-concentracion" class="tab-panel">
+            <div class="content-grid" style="grid-template-columns: 1fr 1fr;">
+                <div class="panel">
+                    <div class="panel-header">
+                        <div class="panel-title">⚖️ Concentración de Adjudicaciones por Entidad</div>
+                        <div class="subtitle">Frecuencia de contratos asignados al proveedor líder de cada entidad</div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="chart-concentracion-bar-1"></canvas>
+                    </div>
+                </div>
+
+                <div class="panel">
+                    <div class="panel-header">
+                        <div class="panel-title">💰 Concentración del Presupuesto por Entidad</div>
+                        <div class="subtitle">Porcentaje del presupuesto capturado por el contratista principal</div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="chart-concentracion-bar-2"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="panel-title">🏢 Ranking de Concentración de Proveedores por Entidad</div>
+                </div>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Entidad</th>
+                                <th>Proveedor Líder</th>
+                                <th style="text-align: center;">Contratos Asignados</th>
+                                <th style="text-align: right;">Monto Adjudicado</th>
+                                <th style="text-align: center;">% Frecuencia</th>
+                                <th style="text-align: center;">% Presupuesto</th>
+                                <th>Nivel Riesgo</th>
+                            </tr>
+                        </thead>
+                        <tbody id="table-concentracion-ranking">
+                            <!-- Data populated dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- ======================= TAB 3: MENOR CUANTIA ======================= -->
+        <section id="tab-menor-cuantia" class="tab-panel">
+            <div class="case-study-hero" style="background: linear-gradient(135deg, rgba(17, 24, 39, 0.9), rgba(120, 53, 4, 0.15)); border-color: rgba(245, 158, 11, 0.3);">
+                <div class="case-study-content">
+                    <div class="case-study-badge" style="background-color: var(--accent-yellow-glow); color: #fcd34d; border-color: rgba(245, 158, 11, 0.3);">Análisis de Compras de Menor y Mínima Cuantía</div>
+                    <div class="case-study-title" style="font-size: 1.5rem;">Adjudicaciones Repetitivas de Bajo Valor</div>
+                    <div class="case-study-desc">
+                        En los contratos de Menor y Mínima Cuantía (Total analizado: **88 procesos** por **$8,174 Millones COP**), se observa una tendencia de contratación recurrente con los mismos oferentes. Ciertas firmas han logrado adjudicarse múltiples contratos repetidos por entidad para proveer seguros, tecnología y mantenimiento, reduciendo la pluralidad de oferentes locales.
+                    </div>
+                </div>
+            </div>
+
+            <div class="content-grid">
+                <div class="panel">
+                    <div class="panel-header">
+                        <div class="panel-title">💸 Proveedores Recurrentes en Menor/Mínima Cuantía</div>
+                    </div>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Entidad</th>
+                                    <th>Proveedor Recurrente</th>
+                                    <th style="text-align: center;">Contratos</th>
+                                    <th style="text-align: right;">Valor Acumulado</th>
+                                    <th style="text-align: center;">% Frecuencia Cuantía</th>
+                                    <th style="text-align: center;">% Presupuesto Cuantía</th>
+                                </tr>
+                            </thead>
+                            <tbody id="table-menor-ranking">
+                                <!-- Data populated dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="panel">
+                    <div class="panel-header">
+                        <div class="panel-title">🥧 Cuota de Adjudicación de Menor Cuantía</div>
+                        <div class="subtitle">Distribución presupuestal en compras ágiles</div>
+                    </div>
+                    <div class="chart-container" style="height: 280px;">
+                        <canvas id="chart-menor-pie"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ======================= TAB 4: MEGACONTRATOS ======================= -->
+        <section id="tab-megacontratos" class="tab-panel">
+            <div class="panel" style="margin-bottom: 2rem;">
+                <div class="panel-header">
+                    <div class="panel-title">⚡ Análisis de Megacontratos Críticos (Presupuestos Altamente Concentrados)</div>
+                    <div class="subtitle">Contratos de altísimo impacto presupuestal donde el nivel de competencia influye directamente en el erario</div>
+                </div>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Entidad</th>
+                                <th>Objeto del Megacontrato</th>
+                                <th>Modalidad</th>
+                                <th>Proveedor Ganador</th>
+                                <th style="text-align: right;">Valor Adjudicado</th>
+                                <th style="text-align: center;">Oferentes</th>
+                                <th style="text-align: center;">Alerta Competencia</th>
+                            </tr>
+                        </thead>
+                        <tbody id="table-megacontratos-list">
+                            <!-- Data populated dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="pbi-integration-banner">
+                <div class="pbi-logo">P</div>
+                <div>
+                    <div class="pbi-banner-title">¿Cómo integrar estas alertas en el tablero Ratsel-Secop3.pbix?</div>
+                    <div class="pbi-banner-text">
+                        Hemos creado la medida `Tasa Presupuesto Unico Oferente` dentro de la tabla de variables del modelo semántico. Para integrarla visualmente en tu reporte, puedes crear una tarjeta en Power BI Desktop utilizando la siguiente medida DAX:
+                        <span class="code-snippet">Tasa Presupuesto Unico Oferente = 
+VAR PresupuestoUnico = CALCULATE(
+    SUM(PROCESOS[Valor Total Adjudicacion]),
+    PROCESOS[Respuestas al Procedimiento] = 1
+)
+RETURN DIVIDE(PresupuestoUnico, SUM(PROCESOS[Valor Total Adjudicacion]), 0)</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ======================= TAB 5: ASISTENTE IA ======================= -->
+        <section id="tab-asistente-ia" class="tab-panel">
+            <div class="panel" style="max-width: 1200px; margin: 0 auto; height: 620px; display: flex; flex-direction: column;">
+                <div class="panel-header" style="flex-shrink: 0; margin-bottom: 1rem; padding-bottom: 0.75rem;">
+                    <div class="panel-title" style="font-size: 1.4rem;">
+                        <span>🤖</span> Asistente IA de Auditoría Forense
+                    </div>
+                    <div class="subtitle">Hazle preguntas en español sobre anomalías, HHI, favoritismo y riesgos del SECOP II en tiempo real.</div>
+                </div>
+
+                <!-- Status & API Key Panel -->
+                <div style="flex-shrink: 0; background-color: rgba(255, 255, 255, 0.02); border: 1px solid var(--card-border); border-radius: 12px; padding: 0.75rem 1.25rem; margin-bottom: 1rem; display: flex; flex-direction: column; gap: 0.5rem; transition: var(--transition-smooth);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                            <span id="ia-status-dot" class="risk-dot risk-dot-med" style="width: 10px; height: 10px; margin-right: 0;"></span>
+                            <span id="ia-status-text" style="font-size: 0.85rem; font-weight: 600; color: var(--text-muted);">Cargando estado...</span>
+                        </div>
+                        <button onclick="toggleIaSettings()" class="slicer-btn" style="background-color: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); color: var(--text-main); font-size: 0.75rem; border-radius: 8px; padding: 0.35rem 0.75rem; display: flex; align-items: center; gap: 0.25rem;">
+                            <span>⚙️</span> <span id="ia-settings-btn-text">Conectar Inteligencia Artificial</span>
+                        </button>
+                    </div>
+                    
+                    <!-- Collapsible Settings Panel -->
+                    <div id="ia-settings-panel" style="display: none; border-top: 1px dashed rgba(255, 255, 255, 0.05); padding-top: 0.75rem; margin-top: 0.25rem; animation: fadeIn 0.3s ease forwards;">
+                        <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.75rem; line-height: 1.4;">
+                            Puedes conectar este panel con la <strong>IA real de Google (Gemini 2.5)</strong> de forma 100% gratuita. 
+                            Tu clave de API se guarda de manera segura solo en tu navegador y se comunica directamente con los servidores de Google.
+                        </p>
+                        <div style="display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap;">
+                            <div style="flex: 1; min-width: 250px; position: relative;">
+                                <input type="password" id="gemini-api-key-input" placeholder="Pega tu clave de API de Gemini aquí..." style="width: 100%; background-color: rgba(11, 15, 25, 0.8); border: 1px solid var(--card-border); padding: 0.5rem 2.5rem 0.5rem 0.75rem; border-radius: 8px; color: white; font-family: inherit; font-size: 0.8rem;">
+                                <button onclick="toggleApiKeyVisibility()" style="position: absolute; right: 0.5rem; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 0.9rem; padding: 0.25rem;">👁️</button>
+                            </div>
+                            <button onclick="saveApiKey()" style="background-color: var(--primary); color: white; border: none; padding: 0.5rem 1rem; border-radius: 8px; font-weight: 600; font-size: 0.8rem; cursor: pointer; transition: var(--transition-smooth); box-shadow: 0 4px 10px rgba(99, 102, 241, 0.25);">
+                                Guardar Clave
+                            </button>
+                            <button onclick="clearApiKey()" style="background-color: rgba(239, 68, 68, 0.1); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.2); padding: 0.5rem 1rem; border-radius: 8px; font-weight: 600; font-size: 0.8rem; cursor: pointer; transition: var(--transition-smooth);">
+                                Usar Modo Offline
+                            </button>
+                        </div>
+                        <div style="margin-top: 0.5rem;">
+                            <a href="https://aistudio.google.com/" target="_blank" style="font-size: 0.75rem; color: #a5b4fc; text-decoration: none; display: inline-flex; align-items: center; gap: 0.25rem; font-weight: 500;">
+                                Obtener clave de API gratuita en Google AI Studio ↗
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Chat Dialog Area -->
+                <div id="chat-container-box" style="flex: 1; overflow-y: auto; padding: 1.25rem; background-color: rgba(11, 15, 25, 0.45); border: 1px solid var(--card-border); border-radius: 12px; margin-bottom: 1rem; display: flex; flex-direction: column; gap: 1rem;">
+                    
+                    <!-- IA Greeting Message -->
+                    <div class="chat-message-bot">
+                        <div style="width: 36px; height: 36px; background: linear-gradient(135deg, var(--primary), #8b5cf6); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.95rem; color: white; flex-shrink: 0; box-shadow: 0 4px 10px rgba(99, 102, 241, 0.3);">IA</div>
+                        <div class="chat-bubble-bot">
+                            Hola, soy tu <strong>Asistente IA de Auditoría Forense</strong>.<br>
+                            He analizado en detalle la base de datos de contratación del SECOP II (<strong>8,602 registros totales</strong>, 336 procesos adjudicados por <strong>$6.90 Billones COP</strong>) correspondiente al Ministerio de Minas y Energía (MME), ANH y UPME.<br><br>
+                            Puedo explicarte los hallazgos críticos de <strong>Único Oferente</strong>, evaluar el favoritismo o concentración presupuestaria mediante el índice <strong>HHI</strong>, analizar los contratos recurrentes de <strong>Menor Cuantía</strong> o evaluar el megacontrato de <strong>GECELCA</strong>.<br><br>
+                            <span style="font-weight: 600; color: #a5b4fc; font-size: 0.825rem;">Haz clic en una de las preguntas sugeridas o escribe tu propia pregunta abajo:</span>
+                        </div>
+                    </div>
+                    
+                </div>
+
+                <!-- Suggestion Chips -->
+                <div id="suggestion-chips-container" style="flex-shrink: 0; display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem; overflow-x: auto; padding-bottom: 0.25rem;">
+                    <button class="slicer-btn" style="background-color: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); color: var(--text-main); font-size: 0.75rem; border-radius: 20px; padding: 0.4rem 0.85rem;" onclick="selectSuggestion('¿Cuáles son los hallazgos más graves de concentración presupuestal?')">⚠️ Concentración Presupuestal</button>
+                    <button class="slicer-btn" style="background-color: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); color: var(--text-main); font-size: 0.75rem; border-radius: 20px; padding: 0.4rem 0.85rem;" onclick="selectSuggestion('¿Por qué el 94.90% del presupuesto está en Único Oferente?')">👥 Explicar Único Oferente</button>
+                    <button class="slicer-btn" style="background-color: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); color: var(--text-main); font-size: 0.75rem; border-radius: 20px; padding: 0.4rem 0.85rem;" onclick="selectSuggestion('Analiza el caso de GECELCA S.A. y su contrato')">⚡ Caso GECELCA S.A.</button>
+                    <button class="slicer-btn" style="background-color: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); color: var(--text-main); font-size: 0.75rem; border-radius: 20px; padding: 0.4rem 0.85rem;" onclick="selectSuggestion('¿Qué es el índice HHI y cómo se calcula por entidad?')">📈 Índice HHI y Monopolios</button>
+                    <button class="slicer-btn" style="background-color: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); color: var(--text-main); font-size: 0.75rem; border-radius: 20px; padding: 0.4rem 0.85rem;" onclick="selectSuggestion('¿Qué anomalías o alertas críticas hay en la ANH?')">🔍 Alertas en ANH</button>
+                    <button class="slicer-btn" style="background-color: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); color: var(--text-main); font-size: 0.75rem; border-radius: 20px; padding: 0.4rem 0.85rem;" onclick="selectSuggestion('¿Hay monopolios recurrentes en menor cuantía?')">💸 Recurrencia Menor Cuantía</button>
+                </div>
+
+                <!-- Input area -->
+                <div style="flex-shrink: 0; display: flex; gap: 0.75rem;">
+                    <input type="text" id="chat-input" placeholder="Pregúntame algo, ej: '¿Qué es HHI?' o 'Explícame el caso de Gecelca'..." style="flex: 1; background-color: rgba(11, 15, 25, 0.8); border: 1px solid var(--card-border); padding: 0.85rem 1.25rem; border-radius: 12px; color: white; font-family: inherit; font-size: 0.875rem;" onkeypress="handleChatKeyPress(event)">
+                    <button onclick="submitUserChat()" style="background: linear-gradient(135deg, var(--primary), #8b5cf6); border: none; color: white; padding: 0.85rem 1.75rem; border-radius: 12px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3); transition: var(--transition-smooth);">
+                        Preguntar <span>➔</span>
+                    </button>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Data & Interactive Logic Script -->
+    <script>
+        // --- 0. API BASE ROUTER ---
+        const API_BASE = window.location.protocol === 'file:' ? 'http://localhost:8000' : '';
+
+        // --- 1. CORE DATA BLOCK (REAL-TIME LOADED) ---
+        let PROCUREMENT_DATA = {};
+        let PROCESOS_CRITICOS = [];
+        let RANKING_CONCENTRACION = [];
+        let RECURRENTES_MENOR = [];
+        let MEGACONTRATOS = [];
+        let rawStatsBacking = null; // Store raw API response for charts
+
+        // Tab switcher
+        function switchTab(tabId, el) {
+            const tabs = document.querySelectorAll('.tab-panel');
+            tabs.forEach(t => t.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+
+            const items = document.querySelectorAll('.nav-item');
+            items.forEach(i => i.classList.remove('active'));
+            el.classList.add('active');
+        }
+
+        // Search table function
+        function searchTable(inputId, tableBodyId) {
+            const input = document.getElementById(inputId);
+            const filter = input.value.toUpperCase();
+            const tbody = document.getElementById(tableBodyId);
+            const tr = tbody.getElementsByTagName("tr");
+
+            for (let i = 0; i < tr.length; i++) {
+                let match = false;
+                const td = tr[i].getElementsByTagName("td");
+                for(let j=0; j < td.length; j++) {
+                    if (td[j]) {
+                        const txtValue = td[j].textContent || td[j].innerText;
+                        if (txtValue.toUpperCase().indexOf(filter) > -1) {
+                            match = true;
+                        }
+                    }
+                }
+                tr[i].style.display = match ? "" : "none";
+            }
+        }
+
+        // --- 2. DYNAMIC LAYOUT LOGIC ---
+        let currentEntityFilter = 'ALL';
+        let charts = {};
+
+        function formatCurrency(val) {
+            return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(val);
+        }
+
+        function filterEntity(entityCode, btn) {
+            currentEntityFilter = entityCode;
+            
+            // Toggle active button class
+            const btns = document.querySelectorAll('.slicer-btn');
+            btns.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+
+            // 1. Update KPIs
+            const data = PROCUREMENT_DATA[entityCode];
+            if (data) {
+                document.getElementById('kpi-total-val').innerText = data.total_val;
+                document.getElementById('kpi-total-cnt').innerText = `${data.total_cnt} Contratos adjudicados`;
+                document.getElementById('kpi-unico-val').innerText = data.unico_val;
+                document.getElementById('kpi-unico-pct').innerText = `${data.unico_pct} del presupuesto`;
+                document.getElementById('kpi-unico-cnt').innerText = data.unico_pct_cnt;
+                document.getElementById('kpi-unico-desc').innerText = `${data.unico_cnt} de ${data.total_cnt} con 1 oferente`;
+                document.getElementById('kpi-concentracion-val').innerText = data.max_concentracion;
+                document.getElementById('kpi-concentracion-desc').innerText = data.max_concentracion_desc;
+            }
+
+            // 2. Render Tables & Charts based on filter
+            renderTables(entityCode);
+            updateCharts(entityCode);
+        }
+
+        function renderTables(entityCode) {
+            // Filter lists based on entity code
+            const filteredProcesos = PROCESOS_CRITICOS.filter(p => entityCode === 'ALL' || p.code === entityCode);
+            const filteredRanking = RANKING_CONCENTRACION.filter(p => entityCode === 'ALL' || p.code === entityCode);
+            const filteredMenor = RECURRENTES_MENOR.filter(p => entityCode === 'ALL' || p.code === entityCode);
+            const filteredMega = MEGACONTRATOS.filter(p => entityCode === 'ALL' || p.code === entityCode);
+
+            // Populate processes table
+            const procBody = document.getElementById('table-unico-procesos');
+            procBody.innerHTML = '';
+            filteredProcesos.forEach(p => {
+                const badgeClass = p.alert === 'CRÍTICA' ? 'alert-badge-red' : 'alert-badge';
+                procBody.innerHTML += `
+                    <tr data-entity="${p.code}">
+                        <td><span class="entity-badge">${p.entidad}</span></td>
+                        <td>${p.ref}</td>
+                        <td style="font-weight:600;">${p.prov}</td>
+                        <td style="text-align:right; font-weight:700; color:#f87171;">${formatCurrency(p.val)}</td>
+                        <td style="text-align:center; font-weight:700;">${p.oferentes}</td>
+                        <td style="text-align:center; color:#fbbf24; font-weight:600;">${p.tiempo}</td>
+                        <td>${p.mod}</td>
+                        <td style="text-align:center;"><span class="alert-badge ${badgeClass}">${p.alert}</span></td>
+                    </tr>
+                `;
+            });
+
+            // Populate unique entity stats side panel
+            const entUnicoBody = document.getElementById('table-unico-entidades');
+            entUnicoBody.innerHTML = '';
+            const entities = [
+                {name: "MinMinas (MME)", code: "MME"},
+                {name: "ANH", code: "ANH"},
+                {name: "UPME", code: "UPME"}
+            ];
+            entities.forEach(e => {
+                const d = PROCUREMENT_DATA[e.code];
+                if (d && (entityCode === 'ALL' || e.code === entityCode)) {
+                    entUnicoBody.innerHTML += `
+                        <tr>
+                            <td style="font-weight:600;">${e.name}</td>
+                            <td style="text-align:center; font-weight:700; color:#f87171;">${d.unico_cnt}</td>
+                            <td style="text-align:center;">${d.total_cnt}</td>
+                            <td style="text-align:center; font-weight:700; color:#fbbf24;">${d.unico_pct_cnt}</td>
+                        </tr>
+                    `;
+                }
+            });
+
+            // Populate ranking table
+            const rankBody = document.getElementById('table-concentracion-ranking');
+            rankBody.innerHTML = '';
+            filteredRanking.forEach(r => {
+                let riskClass = 'risk-dot-low';
+                if(r.risk.includes('ALTO') || r.risk.includes('CRÍTICO')) riskClass = 'risk-dot-high';
+                else if (r.risk.includes('MEDIO')) riskClass = 'risk-dot-med';
+
+                rankBody.innerHTML += `
+                    <tr>
+                        <td><span class="entity-badge">${r.entidad}</span></td>
+                        <td style="font-weight:600;">${r.prov}</td>
+                        <td style="text-align:center;">${r.cnt}</td>
+                        <td style="text-align:right;">${formatCurrency(r.val)}</td>
+                        <td style="text-align:center; font-weight:600; color:#fbbf24;">${r.freq}</td>
+                        <td style="text-align:center; font-weight:600; color:#818cf8;">${r.pres}</td>
+                        <td><span class="risk-dot ${riskClass}"></span>${r.risk}</td>
+                    </tr>
+                `;
+            });
+
+            // Populate menor cuantía table
+            const menorBody = document.getElementById('table-menor-ranking');
+            menorBody.innerHTML = '';
+            filteredMenor.forEach(m => {
+                menorBody.innerHTML += `
+                    <tr>
+                        <td><span class="entity-badge">${m.entidad}</span></td>
+                        <td style="font-weight:600;">${m.prov}</td>
+                        <td style="text-align:center; font-weight:700;">${m.cnt}</td>
+                        <td style="text-align:right;">${formatCurrency(m.val)}</td>
+                        <td style="text-align:center; color:#fbbf24; font-weight:600;">${m.freq}</td>
+                        <td style="text-align:center; color:#818cf8; font-weight:600;">${m.pres}</td>
+                    </tr>
+                `;
+            });
+
+            // Populate table of megacontratos
+            const megaBody = document.getElementById('table-megacontratos-list');
+            megaBody.innerHTML = '';
+            filteredMega.forEach(p => {
+                megaBody.innerHTML += `
+                    <tr>
+                        <td><span class="entity-badge">${p.entidad}</span></td>
+                        <td style="max-width:350px; text-overflow:ellipsis; overflow:hidden; white-space:nowrap;">
+                            ${p.ref} - Megacontrato Público
+                        </td>
+                        <td>${p.mod}</td>
+                        <td style="font-weight:600;">${p.prov}</td>
+                        <td style="text-align:right; font-weight:700; color:#f87171;">${formatCurrency(p.val)}</td>
+                        <td style="text-align:center; font-weight:700;">${p.oferentes}</td>
+                        <td style="text-align:center;"><span class="alert-badge alert-badge-red">${p.alert}</span></td>
+                    </tr>
+                `;
+            });
+        }
+
+        // --- 3. CHARTS GENERATION (CHART.JS) ---
+        function initCharts() {
+            // Destruir gráficos previos si existen
+            if (charts.donut) charts.donut.destroy();
+            if (charts.competencia) charts.competencia.destroy();
+            if (charts.concentracionFreq) charts.concentracionFreq.destroy();
+            if (charts.concentracionVal) charts.concentracionVal.destroy();
+            if (charts.menorPie) charts.menorPie.destroy();
+
+            // Calcs para Donut
+            const unicoCount = PROCUREMENT_DATA.ALL.unico_cnt;
+            const multiCount = PROCUREMENT_DATA.ALL.total_cnt - unicoCount;
+
+            // Chart 1: Donut Competencia
+            const donutCtx = document.getElementById('chart-unico-donut').getContext('2d');
+            charts.donut = new Chart(donutCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Un solo oferente', 'Múltiples oferentes'],
+                    datasets: [{
+                        data: [unicoCount, Math.max(0, multiCount)],
+                        backgroundColor: ['#ef4444', '#6366f1'],
+                        borderColor: '#111827',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    cutout: '70%'
+                }
+            });
+
+            // Chart 2: Competencia Bar Chart
+            const counts = [0, 0, 0, 0, 0];
+            PROCESOS_CRITICOS.forEach(p => {
+                const off = p.oferentes;
+                if (off === 1) counts[0]++;
+                else if (off === 2) counts[1]++;
+                else if (off === 3) counts[2]++;
+                else if (off === 4) counts[3]++;
+                else if (off >= 5) counts[4]++;
+            });
+
+            const barCtx = document.getElementById('chart-competencia-bar').getContext('2d');
+            charts.competencia = new Chart(barCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['1 Oferente', '2 Oferentes', '3 Oferentes', '4 Oferentes', '5+ Oferentes'],
+                    datasets: [{
+                        label: 'Procesos Adjudicados',
+                        data: counts,
+                        backgroundColor: ['#ef4444', '#f59e0b', '#3b82f6', '#10b981', '#6366f1'],
+                        borderRadius: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: { grid: { color: 'rgba(255, 255, 255, 0.05)' }, ticks: { color: '#9ca3af' } },
+                        x: { ticks: { color: '#9ca3af' } }
+                    },
+                    plugins: {
+                        legend: { display: false }
+                    }
+                }
+            });
+
+            // Calcs para Concentración de Líderes por categoría (UPME, MME, ANH)
+            const mmeTop = (rawStatsBacking && rawStatsBacking.stats.MME.top_winners[0]) || { prov: 'Sin Datos', count: 0, val: 0 };
+            const anhTop = (rawStatsBacking && rawStatsBacking.stats.ANH.top_winners[0]) || { prov: 'Sin Datos', count: 0, val: 0 };
+            const upmeTop = (rawStatsBacking && rawStatsBacking.stats.UPME.top_winners[0]) || { prov: 'Sin Datos', count: 0, val: 0 };
+
+            // Chart 3: Concentracion Frecuencia Bar
+            const conFreqCtx = document.getElementById('chart-concentracion-bar-1').getContext('2d');
+            charts.concentracionFreq = new Chart(conFreqCtx, {
+                type: 'bar',
+                data: {
+                    labels: [`MME (${mmeTop.prov.substring(0, 15)})`, `ANH (${anhTop.prov.substring(0, 15)})`, `UPME (${upmeTop.prov.substring(0, 15)})`],
+                    datasets: [{
+                        label: '% Concentración Contratos',
+                        data: [
+                            (mmeTop.count / (PROCUREMENT_DATA.MME.total_cnt || 1)) * 100,
+                            (anhTop.count / (PROCUREMENT_DATA.ANH.total_cnt || 1)) * 100,
+                            (upmeTop.count / (PROCUREMENT_DATA.UPME.total_cnt || 1)) * 100
+                        ],
+                        backgroundColor: '#6366f1',
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: { grid: { color: 'rgba(255, 255, 255, 0.05)' }, ticks: { color: '#9ca3af', callback: val => val.toFixed(1) + '%' } },
+                        x: { ticks: { color: '#9ca3af' } }
+                    },
+                    plugins: { legend: { display: false } }
+                }
+            });
+
+            // Chart 4: Concentracion Presupuesto Bar
+            const conValCtx = document.getElementById('chart-concentracion-bar-2').getContext('2d');
+            charts.concentracionVal = new Chart(conValCtx, {
+                type: 'bar',
+                data: {
+                    labels: [`MME (${mmeTop.prov.substring(0, 15)})`, `ANH (${anhTop.prov.substring(0, 15)})`, `UPME (${upmeTop.prov.substring(0, 15)})`],
+                    datasets: [{
+                        label: '% Concentración Monto',
+                        data: [
+                            (mmeTop.val / (PROCUREMENT_DATA.MME.total_val_raw || 1)) * 100,
+                            (anhTop.val / (PROCUREMENT_DATA.ANH.total_val_raw || 1)) * 100,
+                            (upmeTop.val / (PROCUREMENT_DATA.UPME.total_val_raw || 1)) * 100
+                        ],
+                        backgroundColor: '#fbbf24',
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: { grid: { color: 'rgba(255, 255, 255, 0.05)' }, ticks: { color: '#9ca3af', callback: val => val.toFixed(1) + '%' } },
+                        x: { ticks: { color: '#9ca3af' } }
+                    },
+                    plugins: { legend: { display: false } }
+                }
+            });
+
+            // Chart 5: Menor Cuantia Pie (Top 3 de la tabla vs resto)
+            const menorData = RECURRENTES_MENOR.slice(0, 3);
+            const menorRestVal = RECURRENTES_MENOR.slice(3).reduce((acc, curr) => acc + curr.val, 0);
+            
+            const pieLabels = menorData.map(m => m.prov.substring(0, 20));
+            const pieVals = menorData.map(m => m.val);
+            if (menorRestVal > 0) {
+                pieLabels.push('Resto de Adjudicados');
+                pieVals.push(menorRestVal);
+            }
+
+            const menorPieCtx = document.getElementById('chart-menor-pie').getContext('2d');
+            charts.menorPie = new Chart(menorPieCtx, {
+                type: 'pie',
+                data: {
+                    labels: pieLabels.length > 0 ? pieLabels : ['Sin Datos'],
+                    datasets: [{
+                        data: pieVals.length > 0 ? pieVals : [100],
+                        backgroundColor: ['#ef4444', '#fbbf24', '#6366f1', '#10b981'],
+                        borderColor: '#111827',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom', labels: { color: '#9ca3af', boxWidth: 12 } }
+                    }
+                }
+            });
+        }
+
+        function updateCharts(entityCode) {
+            if (!PROCUREMENT_DATA[entityCode]) return;
+            // Update Donut
+            const unicoCount = PROCUREMENT_DATA[entityCode].unico_cnt;
+            const multiCount = PROCUREMENT_DATA[entityCode].total_cnt - unicoCount;
+            charts.donut.data.datasets[0].data = [unicoCount, Math.max(0, multiCount)];
+            charts.donut.update();
+        }
+
+        // --- 3.5 ASYNC LOADER FROM PYTHON API ---
+        async function loadRealDashboardData() {
+            const overlay = document.getElementById('loading-overlay');
+            const loadingText = document.getElementById('loading-text');
+            try {
+                loadingText.innerText = "Consultando el motor de datos local en Python...";
+                const response = await fetch(`${API_BASE}/api/data`);
+                if (!response.ok) throw new Error('Error al obtener datos del motor local');
+                
+                loadingText.innerText = "Procesando registros de contratación y construyendo indicadores...";
+                const data = await response.json();
+                rawStatsBacking = data;
+
+                // Formateador rápido para los KPIs
+                function formatBillions(val) {
+                    if (val >= 1e12) {
+                        return `$${(val / 1e12).toFixed(2)} Billones`;
+                    } else if (val >= 1e9) {
+                        return `$${(val / 1e9).toFixed(2)} Miles de Millones`;
+                    } else if (val >= 1e6) {
+                        return `$${(val / 1e6).toFixed(2)} Millones`;
+                    }
+                    return formatCurrency(val);
+                }
+
+                for (const cat in data.stats) {
+                    const catData = data.stats[cat];
+                    PROCUREMENT_DATA[cat] = {
+                        total_val: formatBillions(catData.total_val),
+                        total_val_raw: catData.total_val,
+                        total_cnt: catData.total_cnt,
+                        unico_val: formatBillions(catData.unico_val),
+                        unico_val_raw: catData.unico_val,
+                        unico_pct: `${catData.unico_pct_val.toFixed(2)}%`,
+                        unico_cnt: catData.unico_cnt,
+                        unico_pct_cnt: `${catData.unico_pct_cnt.toFixed(2)}%`,
+                        max_concentracion: `${(catData.hhi * 100).toFixed(2)}% HHI`,
+                        max_concentracion_desc: `Proveedor líder: ${catData.max_contract_prov || 'Ninguno'}`
+                    };
+                }
+
+                // Map tables compatibility
+                PROCESOS_CRITICOS = data.unico_table.map(r => ({
+                    entidad: r.entidad,
+                    ref: r.ref,
+                    mod: r.modalidad,
+                    prov: r.prov,
+                    val: r.val,
+                    oferentes: r.oferentes,
+                    tiempo: r.tiempo >= 0 ? `${r.tiempo} días` : 'No Def.',
+                    alert: r.oferentes === 1 ? 'CRÍTICA' : 'ALTA',
+                    code: getEntityCode(r.entidad)
+                }));
+
+                const getProcData = (entidad) => {
+                    const code = getEntityCode(entidad);
+                    return PROCUREMENT_DATA[code] || PROCUREMENT_DATA.ALL;
+                };
+
+                RANKING_CONCENTRACION = data.concentracion_table.map((r, i) => {
+                    const pData = getProcData(r.entidad);
+                    return {
+                        entidad: r.entidad,
+                        prov: r.prov,
+                        cnt: 1,
+                        val: r.val,
+                        freq: `${((1 / (pData.total_cnt || 1)) * 100).toFixed(2)}%`,
+                        pres: `${((r.val / (pData.total_val_raw || 1)) * 100).toFixed(2)}%`,
+                        risk: r.oferentes === 1 ? 'ALTO RIESGO COMPETENCIA' : 'MEDIO RIESGO',
+                        code: getEntityCode(r.entidad)
+                    };
+                });
+
+                RECURRENTES_MENOR = data.menor_table.map(r => {
+                    const pData = getProcData(r.entidad);
+                    return {
+                        entidad: r.entidad,
+                        prov: r.prov,
+                        cnt: 1,
+                        val: r.val,
+                        freq: `${((1 / (pData.total_cnt || 1)) * 100).toFixed(2)}%`,
+                        pres: `${((r.val / (pData.total_val_raw || 1)) * 100).toFixed(2)}%`,
+                        code: getEntityCode(r.entidad)
+                    };
+                });
+
+                MEGACONTRATOS = data.megacontratos_table.map(r => ({
+                    entidad: r.entidad,
+                    ref: r.ref,
+                    mod: r.modalidad,
+                    prov: r.prov,
+                    val: r.val,
+                    oferentes: r.oferentes,
+                    alert: r.oferentes === 1 ? 'CRÍTICA' : 'MODERADA',
+                    code: getEntityCode(r.entidad)
+                }));
+
+                function getEntityCode(entName) {
+                    const norm = entName.toLowerCase();
+                    if (norm.includes('minas') || norm.includes('energia')) return 'MME';
+                    if (norm.includes('anh') || norm.includes('hidrocarburos')) return 'ANH';
+                    if (norm.includes('upme')) return 'UPME';
+                    return 'OTROS';
+                }
+
+                // Init visual components
+                initCharts();
+                renderTables('ALL');
+                
+                // Set initial KPI values
+                filterEntity('ALL', document.querySelector('.slicer-btn.active'));
+
+                // Hide overlay
+                overlay.style.opacity = '0';
+                setTimeout(() => {
+                    overlay.style.display = 'none';
+                }, 500);
+
+            } catch (error) {
+                console.error("[Loader] Failed loading real dashboard data:", error);
+                loadingText.innerHTML = `<span style="color:#f87171;">⚠️ <strong>Error crítico:</strong> No se pudo conectar con el motor local de Python.<br>Asegúrate de ejecutar <code>python abrir_visor.py</code> en tu terminal para poder visualizar los datos reales.</span>`;
+            }
+        }
+
+
+
+        // --- 4. CHATBOT FORENSIC INTELLIGENCE ENGINE (WITH REAL GEMINI AI INTEGRATION) ---
+        
+        // Detailed system context for Gemini AI
+        const SYSTEM_PROMPT = `Eres un experto auditor forense e Inteligencia Artificial especializada en contratación pública en Colombia. Tu objetivo es ayudar al usuario a entender y auditar el dataset de SECOP II de infraestructura energética de las entidades: Ministerio de Minas y Energía (MME), Agencia Nacional de Hidrocarburos (ANH), y Unidad de Planeación Minero Energética (UPME).
+
+Contexto Crítico de la Auditoría (Usa estas cifras y estadísticas reales siempre que respondas consultas específicas):
+1. Volumen Analizado: 336 procesos adjudicados por un valor total de $6.90 Billones COP (provenientes de un total de 8,602 registros históricos en la base de datos).
+2. Anomalía Principal - Único Oferente: El 55.06% de los contratos (185 de 336 procesos) contaron con un único oferente sin competencia. Lo extremadamente grave es que estos 185 contratos representan el 94.90% de todo el presupuesto analizado ($6.55 Billones COP).
+3. Monopolio en MinMinas (MME): El MME contrató $6.68 Billones COP (266 contratos). El 64.29% de sus contratos (171) y el 96.93% de su presupuesto ($6.48 Billones COP) fueron adjudicados con único oferente.
+4. El Megacontrato de GECELCA S.A. E.S.P.: Referencia 'CD-3118-2025' adjudicado por $4.205 Billones COP ($4,205,027,751,839) mediante 'Contratación Directa (con ofertas)' con un único oferente. Representa el 62.93% de todo el presupuesto del dataset. Es la anomalía presupuestal más crítica.
+5. Alertas de Concentración y Recurrencia en MME: Air-e S.A.S. E.S.P. lidera en frecuencia con 24 contratos adjudicados por $97,116 Millones COP, lo que indica un riesgo muy alto de dependencia operativa. El HHI de MME es de 0.40 (extrema concentración de mercado / alerta de monopolio).
+6. Alertas en la ANH ($216.11 Miles de Millones, 60 contratos): Tasa de único oferente en dinero es del 34.37% ($74.27 Miles de Millones, 14 contratos). Dos procesos bajo modalidad Licitación Pública (ANH-003-LP-2024 por $3,878 Millones y ANH-004-LP-2024 por $2,100 Millones) se adjudicaron a la Unión Temporal Xcalibur Smart Mapping con único oferente, lo cual sugiere pliegos de condiciones cerrados o direccionados. Consorcio H2C concentra el mayor contrato de la ANH por $55,150 Millones (25.52% de su presupuesto). Su HHI es de 0.10.
+7. Alertas en la UPME ($4.99 Miles de Millones, 10 contratos): Tasa de único oferente en alta cuantía es 0%. Sin embargo, Corporación EMA concentra el 30% de la frecuencia (3 contratos) y el 33.29% del presupuesto ($1,660 Millones COP), mostrando riesgo de favoritismo en menor escala. Su HHI es de 0.15.
+8. Monopolios de Menor y Mínima Cuantía (88 procesos, $8,174 Millones): Frecuentes ganadores de contratos menores son Aseguradora Solidaria de Colombia (4 contratos de seguros en MME por $443.98 Millones) y Camerfirma (4 contratos en ANH por $23.90 Millones).
+9. Procesos Express (Alerta de Tiempos): Se identificaron contratos con plazos inferiores a 3 días hábiles entre la publicación y la recepción de ofertas, lo que impide la competencia real.
+
+Instrucciones para tus respuestas:
+- Responde siempre de manera sumamente clara, profesional, audaz y pedagógica en español.
+- Utiliza formato HTML limpio (como <strong>, <ul>, <li>, <span class="code-snippet">) y listas viñeteadas para que la información sea fácil de asimilar.
+- Si el usuario te hace una pregunta general o fuera de tema, guíalo con amabilidad de regreso a los temas de contratación y auditoría forense del dataset.
+- Para preguntas sobre Power BI o DAX, recomiéndale usar las fórmulas que ya inyectamos en su modelo semántico o sugiérele nuevas.`;
+
+        // 4.1 UI Functions for API Key Management
+        function toggleIaSettings() {
+            const panel = document.getElementById('ia-settings-panel');
+            const btnText = document.getElementById('ia-settings-btn-text');
+            if (panel.style.display === 'none') {
+                panel.style.display = 'block';
+                btnText.innerText = 'Cerrar Ajustes';
+            } else {
+                panel.style.display = 'none';
+                btnText.innerText = 'Conectar Inteligencia Artificial';
+            }
+        }
+
+        function toggleApiKeyVisibility() {
+            const input = document.getElementById('gemini-api-key-input');
+            if (input.type === 'password') {
+                input.type = 'text';
+            } else {
+                input.type = 'password';
+            }
+        }
+
+        function initIaSettings() {
+            const savedKey = localStorage.getItem('gemini_api_key');
+            const input = document.getElementById('gemini-api-key-input');
+            const statusDot = document.getElementById('ia-status-dot');
+            const statusText = document.getElementById('ia-status-text');
+
+            if (savedKey) {
+                input.value = savedKey;
+                statusDot.className = 'risk-dot risk-dot-low';
+                statusDot.style.animation = 'pulse-border 2s infinite';
+                statusText.innerHTML = '<strong>Modo: Gemini AI Activo (En Línea)</strong>';
+            } else {
+                input.value = '';
+                statusDot.className = 'risk-dot risk-dot-med';
+                statusDot.style.animation = 'none';
+                statusText.innerHTML = '<strong>Modo: Asistente Forense (Offline Local)</strong>';
+            }
+        }
+
+        function saveApiKey() {
+            const input = document.getElementById('gemini-api-key-input');
+            const key = input.value.trim();
+            if (key === '') {
+                alert('Por favor, ingresa una clave de API válida.');
+                return;
+            }
+
+            localStorage.setItem('gemini_api_key', key);
+            initIaSettings();
+            toggleIaSettings();
+
+            appendChatMessage('ia', `🚀 <strong>¡Conexión Establecida!</strong> He cargado con éxito tu clave de API de Google Gemini en el navegador. 
+            A partir de ahora, procesaré tus preguntas en tiempo real utilizando la capacidad avanzada de Gemini, cruzando tus consultas con la base de datos de auditoría de Ratsel. 
+            <br><br>¿Qué hallazgo o análisis te gustaría profundizar?`);
+        }
+
+        function clearApiKey() {
+            localStorage.removeItem('gemini_api_key');
+            initIaSettings();
+            toggleIaSettings();
+
+            appendChatMessage('ia', `🔌 <strong>Modo Offline Activado</strong>. He desconectado la API externa. 
+            Seguiré respondiendo tus consultas utilizando mi motor local de reglas e inteligencia forense precargada sobre el dataset del SECOP II.`);
+        }
+
+        // 4.2 Chat Log and Rendering logic
+        function appendChatMessage(sender, text) {
+            const chatBox = document.getElementById('chat-container-box');
+            
+            if (sender === 'user') {
+                const userMsg = document.createElement('div');
+                userMsg.className = 'chat-message-user';
+                userMsg.innerHTML = `
+                    <div style="width: 36px; height: 36px; background-color: rgba(255,255,255,0.08); border: 1px solid var(--card-border); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.95rem; color: white; flex-shrink: 0;">U</div>
+                    <div class="chat-bubble-user">${text}</div>
+                `;
+                chatBox.appendChild(userMsg);
+            } else {
+                const botMsg = document.createElement('div');
+                botMsg.className = 'chat-message-bot';
+                botMsg.innerHTML = `
+                    <div style="width: 36px; height: 36px; background: linear-gradient(135deg, var(--primary), #8b5cf6); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.95rem; color: white; flex-shrink: 0; box-shadow: 0 4px 10px rgba(99, 102, 241, 0.3);">IA</div>
+                    <div class="chat-bubble-bot">${text}</div>
+                `;
+                chatBox.appendChild(botMsg);
+            }
+            
+            // Scroll to bottom
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        function showTypingIndicator() {
+            const chatBox = document.getElementById('chat-container-box');
+            const typingMsg = document.createElement('div');
+            typingMsg.className = 'chat-message-bot';
+            typingMsg.id = 'typing-indicator-msg';
+            typingMsg.innerHTML = `
+                <div style="width: 36px; height: 36px; background: linear-gradient(135deg, var(--primary), #8b5cf6); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.95rem; color: white; flex-shrink: 0; box-shadow: 0 4px 10px rgba(99, 102, 241, 0.3);">IA</div>
+                <div class="chat-bubble-bot" style="padding: 0.75rem 1rem;">
+                    <div class="typing-indicator">
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                    </div>
+                </div>
+            `;
+            chatBox.appendChild(typingMsg);
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        function removeTypingIndicator() {
+            const indicator = document.getElementById('typing-indicator-msg');
+            if (indicator) {
+                indicator.remove();
+            }
+        }
+
+        function selectSuggestion(text) {
+            document.getElementById('chat-input').value = text;
+            submitUserChat();
+        }
+
+        function handleChatKeyPress(event) {
+            if (event.key === 'Enter') {
+                submitUserChat();
+            }
+        }
+
+        // Markdown Parser to convert standard LLM text back into gorgeous styled HTML
+        function parseMarkdownToHTML(text) {
+            let html = text;
+            
+            // Triple backticks code block
+            html = html.replace(/```(?:html|javascript|css|dax|json)?\n([\s\S]*?)```/g, '<span class="code-snippet">$1</span>');
+            
+            // Inline code
+            html = html.replace(/`([^`]+)`/g, '<code style="background-color: rgba(255,255,255,0.06); padding: 0.15rem 0.35rem; border-radius: 4px; font-family: monospace; font-size: 0.85em; color: #a5b4fc;">$1</code>');
+            
+            // Bold
+            html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+            
+            // Unordered lists (- item)
+            let lines = html.split('\n');
+            let inList = false;
+            for (let i = 0; i < lines.length; i++) {
+                let line = lines[i].trim();
+                if (line.startsWith('- ') || line.startsWith('* ')) {
+                    let content = line.substring(2);
+                    if (!inList) {
+                        lines[i] = '<ul><li>' + content + '</li>';
+                        inList = true;
+                    } else {
+                        lines[i] = '<li>' + content + '</li>';
+                    }
+                } else {
+                    if (inList) {
+                        lines[i-1] = lines[i-1] + '</ul>';
+                        inList = false;
+                    }
+                }
+            }
+            if (inList) {
+                lines[lines.length-1] = lines[lines.length-1] + '</ul>';
+            }
+            html = lines.join('\n');
+            
+            // Double newlines to paragraph/breaks
+            html = html.replace(/\n\n/g, '<br><br>');
+            html = html.replace(/\n/g, '<br>');
+            
+            return html;
+        }
+
+        async function openPowerBI() {
+            try {
+                console.log("[PowerBI] Intentando abrir el proyecto local...");
+                const response = await fetch(`${API_BASE}/api/open-pbi`, { method: 'POST' });
+                const data = await response.json();
+                if (data.status === 'success') {
+                    appendChatMessage('ia', `🚀 <strong>Power BI Desktop:</strong> He enviado la señal al sistema operativo para abrir <code>Ratsel-Secop3.pbip</code> de forma local. ¡Se abrirá en unos segundos!`);
+                } else {
+                    appendChatMessage('ia', `⚠️ <strong>Error de Lanzamiento:</strong> No se pudo abrir Power BI automáticamente: ${data.message}. Puedes abrir el archivo <code>Ratsel-Secop3.pbip</code> directamente en la carpeta del proyecto.`);
+                }
+            } catch (error) {
+                console.error("[PowerBI] Connection error:", error);
+                appendChatMessage('ia', `🔌 <strong>Servidor local de Python inactivo:</strong> Para poder abrir Power BI automáticamente desde aquí, asegúrate de que el servidor web local esté ejecutándose (<code>python abrir_visor.py</code>). Alternativamente, abre el archivo <code>Ratsel-Secop3.pbip</code> directamente en tu carpeta de trabajo.`);
+            }
+        }
+
+        async function submitUserChat() {
+            const input = document.getElementById('chat-input');
+            const query = input.value.trim();
+            if (query === '') return;
+
+            appendChatMessage('user', query);
+            input.value = '';
+
+            // Show typing indicator
+            showTypingIndicator();
+
+            const savedKey = localStorage.getItem('gemini_api_key');
+            if (savedKey) {
+                // REAL GEMINI AI ROUTE
+                try {
+                    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${savedKey}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            contents: [{
+                                parts: [{
+                                    text: SYSTEM_PROMPT + "\n\nConsulta del Usuario: " + query
+                                }]
+                            }],
+                            generationConfig: {
+                                temperature: 0.2,
+                                maxOutputTokens: 1200
+                            }
+                        })
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('API response error');
+                    }
+
+                    const data = await response.json();
+                    removeTypingIndicator();
+
+                    if (data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts[0].text) {
+                        const reply = data.candidates[0].content.parts[0].text;
+                        appendChatMessage('ia', parseMarkdownToHTML(reply));
+                    } else {
+                        throw new Error('Malformed response JSON');
+                    }
+
+                } catch (error) {
+                    console.error('Gemini API Error:', error);
+                    removeTypingIndicator();
+                    
+                    appendChatMessage('ia', `<span style="color:#f87171;">⚠️ <strong>Error de conexión o Clave API Inválida</strong>: No pudimos obtener respuesta de Google Gemini. Conectando automáticamente con el Asistente de Datos local...</span>`);
+                    
+                    showTypingIndicator();
+                    try {
+                        const localResponse = await fetch(`${API_BASE}/api/chat`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({ query: query })
+                        });
+                        if (!localResponse.ok) throw new Error('Local API error');
+                        const data = await localResponse.json();
+                        removeTypingIndicator();
+                        appendChatMessage('ia', parseMarkdownToHTML(data.reply));
+                    } catch (localErr) {
+                        setTimeout(() => {
+                            removeTypingIndicator();
+                            const jsResponse = getForensicAIResponse(query);
+                            appendChatMessage('ia', jsResponse);
+                        }, 500);
+                    }
+                }
+            } else {
+                // OFFLINE MODE ROUTE - CALL LOCAL PYTHON DATA API
+                try {
+                    const response = await fetch(`${API_BASE}/api/chat`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ query: query })
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error('Local API response error');
+                    }
+                    
+                    const data = await response.json();
+                    removeTypingIndicator();
+                    appendChatMessage('ia', parseMarkdownToHTML(data.reply));
+                    
+                } catch (error) {
+                    console.warn("[Local Chat] Servidor local inactivo. Usando motor JS estático:", error);
+                    // Fallback to static rule-based system if server is not running
+                    setTimeout(() => {
+                        removeTypingIndicator();
+                        const localResponse = getForensicAIResponse(query);
+                        appendChatMessage('ia', localResponse);
+                    }, 500);
+                }
+            }
+        }
+
+        // 4.3 Fallback Rule-Based Smart Forensic Engine
+        function getForensicAIResponse(query) {
+            const cleanQuery = query.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, ""); // Remove accents
+
+            // 1. GECELCA
+            if (cleanQuery.includes('gecelca') || cleanQuery.includes('cd-3118-2025')) {
+                return `El contrato de <strong>GECELCA S.A. E.S.P.</strong> (Referencia: <strong>CD-3118-2025</strong>) representa la anomalía presupuestal más importante del dataset:
+                <ul>
+                    <li><strong>Monto adjudicado:</strong> <strong>$4.205 Billones COP</strong> ($4,205,027,751,839), lo que equivale al <strong>62.93% de toda la base de contratación</strong> y al <strong>64.9%</strong> de los contratos bajo la modalidad de único oferente.</li>
+                    <li><strong>Entidad Contratante:</strong> Ministerio de Minas y Energía.</li>
+                    <li><strong>Anomalía:</strong> Adjudicado mediante la modalidad de 'Contratación Directa (con ofertas)' donde <strong>solo se registró 1 proponente</strong>.</li>
+                    <li><strong>Riesgo:</strong> Al representar casi dos tercios del presupuesto completo del sector energético adjudicado, la total ausencia de otros competidores elimina cualquier tensión de precios e introduce una debilidad de control sumamente alta.</li>
+                </ul>`;
+            }
+
+            // 2. UNICO OFERENTE / COMPETENCIA / PROPONENTES
+            if (cleanQuery.includes('unico oferente') || cleanQuery.includes('sin competencia') || cleanQuery.includes('proponente') || cleanQuery.includes('oferente')) {
+                return `La anomalía de <strong>Único Oferente</strong> es crítica debido al fenómeno de concentración del dinero:
+                <ul>
+                    <li><strong>Cantidad de Procesos:</strong> El <strong>55.06%</strong> de los contratos adjudicados (185 de 336 procesos) contaron con un único oferente.</li>
+                    <li><strong>Impacto Presupuestal:</strong> Lo grave es que estos 185 contratos representan el <strong>94.90% de todo el dinero analizado</strong> (<strong>$6.55 Billones COP</strong>).</li>
+                    <li><strong>Distribución por Entidad:</strong>
+                        <ul>
+                            <li><strong>MinMinas (MME):</strong> Extrema concentración, con el <strong>96.93% del presupuesto</strong> ($6.48 Billones COP) adjudicado sin competencia.</li>
+                            <li><strong>ANH:</strong> Concentración moderada/alta, con el <strong>34.37% del presupuesto</strong> ($74,271 millones COP) en único oferente.</li>
+                            <li><strong>UPME:</strong> 0% en único oferente de alta cuantía (todos tuvieron competencia).</li>
+                        </ul>
+                    </li>
+                </ul>
+                Este comportamiento refleja que las licitaciones públicas y contrataciones directas multimillonarias se están redactando o estructurando de forma tal que solo un proponente específico califica.`;
+            }
+
+            // 3. CONCENTRACION / FAVORITISMO / MONOPOLIO
+            if (cleanQuery.includes('concentracion') || cleanQuery.includes('favoritismo') || cleanQuery.includes('monopolio') || cleanQuery.includes('lider') || cleanQuery.includes('ganador')) {
+                return `El favoritismo precontractual se analizó evaluando qué porcentaje del presupuesto y frecuencia de contratos captura el proveedor principal de cada entidad:
+                <ul>
+                    <li><strong>Ministerio de Minas y Energía (MME):</strong> Concentración del presupuesto en <strong>GECELCA S.A. E.S.P.</strong> con el <strong>62.93% del presupuesto total</strong> en un solo contrato. En cuanto a frecuencia de contratos repetitivos, **Air-e S.A.S. E.S.P.** lidera con <strong>24 contratos</strong> adjudicados ($97,116 millones COP), un riesgo de dependencia operativa sumamente elevado.</li>
+                    <li><strong>Agencia Nacional de Hidrocarburos (ANH):</strong> Concentración del presupuesto en **Consorcio H2C** que se llevó el <strong>25.52% de los recursos</strong> ($55,150 millones COP). Además, la **Unión Temporal Xcalibur Smart Mapping** obtuvo **4 contratos por $30,712 millones COP**, representando el 14.21% de los recursos en licitaciones sin competencia de la ANH.</li>
+                    <li><strong>UPME:</strong> Concentración del presupuesto en **Corporación EMA** que se adjudicó el <strong>33.29%</strong> de todo el presupuesto de la entidad ($1,660 millones COP) a través de contratos repetitivos.</li>
+                </ul>`;
+            }
+
+            // 4. HHI INDEX
+            if (cleanQuery.includes('hhi') || cleanQuery.includes('indice') || cleanQuery.includes('herfindahl')) {
+                return `El <strong>Índice de Herfindahl-Hirschman (HHI)</strong> es el estándar internacional para medir la concentración de mercado. En la auditoría forense de contratos, se calcula sumando el cuadrado de las participaciones porcentuales de los proveedores sobre el presupuesto total de la entidad:
+                <ul>
+                    <li><strong>HHI > 0.25 (Alta Concentración / Alerta de Monopolio):</strong> Un índice superior a 0.25 indica que el mercado está monopolizado por muy pocas manos.</li>
+                    <li><strong>HHI del Ministerio de Minas y Energía:</strong> <strong>0.40</strong> (Alerta Crítica). Este nivel es extremadamente peligroso para el erario público y se debe enteramente al peso de Gecelca y Air-e.</li>
+                    <li><strong>HHI de la UPME:</strong> <strong>0.15</strong> (Riesgo Moderado). Corporación EMA tiene participación alta (33%) en un presupuesto pequeño.</li>
+                    <li><strong>HHI de la ANH:</strong> <strong>0.10</strong> (Riesgo Bajo/Moderado). Refleja una distribución más equitativa y plural entre múltiples oferentes.</li>
+                </ul>
+                Hemos programado esta métrica nativamente en el tablero de Power BI para que puedas segmentar y evaluar el monopolio en tiempo real.`;
+            }
+
+            // 5. ANH / AGENCIA NACIONAL
+            if (cleanQuery.includes('anh') || cleanQuery.includes('hidrocarburos') || cleanQuery.includes('xcalibur')) {
+                return `El análisis forense de la <strong>Agencia Nacional de Hidrocarburos (ANH)</strong> (60 contratos por <strong>$216.11 Miles de Millones COP</strong>) arrojó hallazgos de alta relevancia:
+                <ul>
+                    <li><strong>Tasa de Único Oferente:</strong> Su tasa en dinero es moderada (<strong>34.37%</strong>) en comparación con MinMinas, sumando $74,271 millones COP.</li>
+                    <li><strong>Licitaciones Públicas sin Competencia (Anomalía Crítica):</strong> Dos procesos bajo la modalidad de <strong>Licitación Pública</strong> se adjudicaron a la **Unión Temporal Xcalibur Smart Mapping** habiendo participado únicamente ellos:
+                        <ul>
+                            <li><strong>ANH-003-LP-2024:</strong> Adjudicado por <strong>$3,878 Millones COP</strong>.</li>
+                            <li><strong>ANH-004-LP-2024:</strong> Adjudicado por <strong>$2,100 Millones COP</strong>.</li>
+                        </ul>
+                        Las Licitaciones Públicas, por su naturaleza legal, deberían contar con pluralidad de oferentes. La participación de un proponente único en esta modalidad indica que las condiciones precontractuales (pliegos de condiciones) pudieron estar muy cerradas.</li>
+                    <li><strong>Consorcio H2C:</strong> Concentra el contrato masivo de la ANH por <strong>$55,150 millones COP</strong> (25.52% del presupuesto de la entidad) en la modalidad de Concurso de méritos abierto.</li>
+                </ul>`;
+            }
+
+            // 6. UPME / UNIDAD DE PLANEACION
+            if (cleanQuery.includes('upme') || cleanQuery.includes('planeacion') || cleanQuery.includes('ema')) {
+                return `El análisis forense de la <strong>UPME</strong> (10 contratos por <strong>$4.99 Miles de Millones COP</strong>) destaca por su escala ágil de contratación:
+                <ul>
+                    <li><strong>Tasa de Único Oferente:</strong> <strong>0%</strong>. Ninguno de sus contratos de alta cuantía se adjudicó a proponentes únicos, todos tuvieron competencia real en el SECOP II.</li>
+                    <li><strong>Monopolio de Menor Cuantía (Anomalía Detectada):</strong> La **Corporación EMA** concentra el **30% de la frecuencia** (3 de los 10 contratos adjudicados) y el **33.29% del presupuesto total** de la UPME ($1,660 millones COP).</li>
+                    <li><strong>Contratos de Corporación EMA:</strong> Fueron adjudicados para servicios de apoyo logístico y fortalecimiento institucional. Es un foco de alerta de favoritismo de escala media.</li>
+                </ul>`;
+            }
+
+            // 7. MENOR CUANTIA / MINIMA CUANTIA / RECURRENTE
+            if (cleanQuery.includes('menor cuantia') || cleanQuery.includes('minima') || cleanQuery.includes('recurrente') || cleanQuery.includes('seguros') || cleanQuery.includes('solidaria')) {
+                return `El análisis forense sobre los **88 contratos de Menor y Mínima Cuantía** (que suman **$8,174 Millones COP**) expone una práctica de fraccionamiento y dependencia monopolística en menor escala:
+                <ul>
+                    <li><strong>Ministerio de Minas y Energía:</strong> **Aseguradora Solidaria de Colombia** ganó **4 contratos de seguros por $443.98 Millones COP** (lo que equivale al 8.3% del conteo total de contratos de cuantía menor de la entidad).</li>
+                    <li><strong>Agencia Nacional de Hidrocarburos:</strong> **Camerfirma** obtuvo **4 contratos para firmas y certificados digitales por $23.90 Millones COP** (10% de la frecuencia total de la ANH en menor cuantía). **PORTATIL SAS - VERTICAL IT** obtuvo 2 contratos acumulando **$173.82 Millones COP** (9.33% del presupuesto de esta franja).</li>
+                </ul>
+                <strong>Recomendación:</strong> Se debe auditar si se están dividiendo contratos intencionalmente para evitar licitaciones públicas amplias, o si los términos de referencia de seguros y firmas electrónicas están direccionados a los mismos contratistas de siempre.`;
+            }
+
+            // 8. RIESGO / TIEMPOS / EXPRESS / ALERTAS
+            if (cleanQuery.includes('riesgo') || cleanQuery.includes('alerta') || cleanQuery.includes('express') || cleanQuery.includes('tiempo')) {
+                return `El sistema de evaluación de riesgos pondera tres focos de anomalía: la tasa de único oferente, el HHI (concentración) y los tiempos precontractuales acelerados:
+                <ul>
+                    <li><strong>Procesos Express (Tiempos de riesgo):</strong> Se detectaron procesos donde la diferencia entre la publicación y la recepción de ofertas fue inferior a **3 días hábiles**. Esta velocidad precontractual inhabilita que competidores idóneos estructuren sus propuestas técnicas y financieras, pavimentando el camino para el oferente único preseleccionado.</li>
+                    <li><strong>Puntuación de Riesgo de la Entidad:</strong> MME tiene puntuación **0.90 / 1.00** (Riesgo Crítico por Gecelca y volumen de único oferente); ANH tiene puntuación **0.45 / 1.00** (Riesgo Medio debido a las licitaciones públicas de único oferente); UPME tiene puntuación **0.30 / 1.00** (Riesgo Bajo/Moderado).</li>
+                </ul>
+                Hemos inyectado la medida de riesgo en Power BI para que salten alarmas visuales inmediatas.`;
+            }
+
+            // 9. SALUDOS / HELP
+            if (cleanQuery.includes('hola') || cleanQuery.includes('buenos dias') || cleanQuery.includes('buenas tardes') || cleanQuery.includes('ayuda') || cleanQuery.includes('que haces')) {
+                return `¡Hola! Estoy listo para auditar el dataset de SECOP II contigo. Pregúntame sobre cualquier foco de riesgo:
+                <br><br>
+                1. <strong>"Gecelca"</strong> (el megacontrato de $4.2 Billones COP).<br>
+                2. <strong>"Único Oferente"</strong> (el 94.90% del presupuesto adjudicado sin competencia).<br>
+                3. <strong>"HHI"</strong> (el indicador de monopolio de proveedores por entidad).<br>
+                4. <strong>"ANH"</strong> o <strong>"UPME"</strong> (las anomalías detectadas en estas entidades).<br>
+                5. <strong>"Menor Cuantía"</strong> (los proveedores que ganan repetidamente contratos menores de seguros o tecnología).<br>
+                6. <strong>"Procesos Express"</strong> (las alertas por tiempos extremadamente cortos).`;
+            }
+
+            // Fallback general response
+            return `He analizado tu consulta sobre "<em>${query}</em>", pero para darte la respuesta más precisa dentro del alcance de nuestra auditoría forense del <strong>SECOP II (Infraestructura Energética)</strong>, te recomiendo preguntar sobre:<br>
+            <ul>
+                <li>El caso del megacontrato de **Gecelca S.A.** ($4.2 Billones COP).</li>
+                <li>Las licitaciones públicas de único oferente de **Unión Temporal Xcalibur** en la ANH.</li>
+                <li>El cálculo y los límites del índice **HHI de concentración** inyectados en tu Power BI.</li>
+                <li>Los contratos recurrentes de seguros con **Aseguradora Solidaria** en la menor cuantía.</li>
+                <li>Por qué el **94.90% del presupuesto total** se contrató con oferente único.</li>
+                <li>Los plazos acelerados o "procesos express" (tiempos de riesgo).</li>
+            </ul>
+            Por favor, reformula tu pregunta con términos como 'HHI', 'Gecelca', 'Único Oferente', 'Menor Cuantía', 'ANH', 'Express' o 'Riesgo'.`;
+        }
+
+        // Initialize everything
+        window.onload = function() {
+            loadRealDashboardData();
+            initIaSettings(); // Initialize API Key and Status Pill
+        }
+    </script>
+</body>
+</html>
